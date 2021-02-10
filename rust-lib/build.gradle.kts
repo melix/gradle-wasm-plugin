@@ -1,7 +1,9 @@
 import io.github.liurenjie1024.gradle.rust.CargoBuildTask
+import me.champeau.wasm.tasks.WasmGcTask
 
 plugins {
     id("io.github.liurenjie1024.gradle.rust") version "0.1.0"
+    id("me.champeau.wasm")
 }
 
 val target = "wasm32-unknown-unknown"
@@ -15,8 +17,18 @@ tasks.withType<CargoBuildTask>().configureEach {
     )
 }
 
-fun wasmBinary() = layout.buildDirectory
-        .file(provider { "${target}/release/${rustLib.replace("-", "_")}.wasm" })
+val wasmGc by tasks.registering(WasmGcTask::class) {
+    dependsOn(tasks.named("cargoBuild"))
+    inputDirectory.set(wasmOutputDir())
+    outputDirectory.set(wasmGcOutputDir())
+}
+
+fun wasmOutputDir() = layout.buildDirectory.dir(target)
+fun wasmGcOutputDir() = layout.buildDirectory.dir("minified/${target}")
+
+fun embeddedBinary() = wasmGcOutputDir().map {
+    it.file("release/${rustLib.replace("-", "_")}.wasm")
+}
 
 val wasmElements by configurations.creating {
     isCanBeConsumed = true
@@ -27,8 +39,8 @@ val wasmElements by configurations.creating {
     }
     outgoing {
         artifacts {
-            artifact(wasmBinary()) {
-                builtBy(tasks.named("cargoBuild"))
+            artifact(embeddedBinary()) {
+                builtBy(wasmGc)
             }
         }
     }

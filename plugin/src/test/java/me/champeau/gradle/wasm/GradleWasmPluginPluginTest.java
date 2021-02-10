@@ -18,6 +18,6 @@ public class GradleWasmPluginPluginTest {
         project.getPlugins().apply("me.champeau.gradle.wasm.greeting");
 
         // Verify the result
-        assertNotNull(project.getTasks().findByName("greeting"));
+        assertNotNull(project.getTasks().findByName("greet"));
     }
 }
