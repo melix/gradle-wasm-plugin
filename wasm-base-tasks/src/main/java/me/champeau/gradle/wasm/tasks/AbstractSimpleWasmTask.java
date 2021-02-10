@@ -26,7 +26,11 @@ public abstract class AbstractSimpleWasmTask extends AbstractWasmTask {
 
     @SuppressWarnings("unchecked")
     protected final <T> T callFunction(Object... args) {
-        return (T) withWasmRuntime(instance -> findFunction(instance).apply(args))[0];
+        return (T) withWasmRuntime(instance -> apply(instance, args))[0];
+    }
+
+    protected Object[] apply(Instance instance, Object... args) {
+        return findFunction(instance).apply(args);
     }
 
     private Function findFunction(Instance instance) {

@@ -39,7 +39,9 @@ public class GradleWasmPluginFunctionalTest {
         BuildResult result = runner.build();
 
         // Verify the result
-        assertTrue(result.getOutput().contains("Sum is 42"));
+        assertTrue(result.getOutput().contains("Rust fib(90) = 2880067194370816120"));
+        assertTrue(result.getOutput().contains("Java fib(90) = 2880067194370816120"));
+        assertTrue(result.getOutput().contains("Precompiled Rust fib(90) = 2880067194370816120"));
     }
 
     private void writeString(File file, String string) throws IOException {
