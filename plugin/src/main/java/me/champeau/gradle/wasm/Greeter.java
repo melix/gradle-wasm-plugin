@@ -22,7 +22,6 @@ import org.gradle.api.tasks.TaskAction;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 public abstract class Greeter extends AbstractSimpleWasmTask {
@@ -55,7 +54,7 @@ public abstract class Greeter extends AbstractSimpleWasmTask {
             System.out.println("Rust fib(" + n + ") = " + calc);
         });
         measure("Using memoized fib written in Java", () ->{
-            long calc = callFunction(n);
+            long calc = fib(n);
             System.out.println("Java fib(" + n + ") = " + calc);
         });
         withWasmRuntime(instance -> {
@@ -75,7 +74,7 @@ public abstract class Greeter extends AbstractSimpleWasmTask {
             r.run();
         } finally {
             long dur = System.nanoTime() - sd;
-            System.out.println("Took " + TimeUnit.NANOSECONDS.toMillis(dur) + "ms");
+            System.out.println("Took " + dur + "ns");
         }
     }
 
@@ -94,7 +93,14 @@ public abstract class Greeter extends AbstractSimpleWasmTask {
         }
 
         private Function<T, R> memoize(Function<T, R> function) {
-            return input -> cache.computeIfAbsent(input, function);
+            return input -> {
+                if (cache.containsKey(input)) {
+                    return cache.get(input);
+                }
+                R res = function.apply(input);
+                cache.put(input, res);
+                return res;
+            };
         }
 
     }
