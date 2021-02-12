@@ -49,4 +49,13 @@ public abstract class AbstractWasmTask extends DefaultTask {
             instance.close();
         }
     }
+
+    protected final org.wasmer.exports.Function findFunction(Instance instance, String name) {
+        return instance.exports.getFunction(name);
+    }
+
+    @SuppressWarnings("unchecked")
+    protected <T> T apply(Instance instance, String name, Object... args) {
+        return (T) findFunction(instance, name).apply(args)[0];
+    }
 }

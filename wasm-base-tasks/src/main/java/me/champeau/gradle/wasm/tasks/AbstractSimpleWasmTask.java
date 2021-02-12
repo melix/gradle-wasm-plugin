@@ -18,7 +18,6 @@ package me.champeau.gradle.wasm.tasks;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Internal;
 import org.wasmer.Instance;
-import org.wasmer.exports.Function;
 
 public abstract class AbstractSimpleWasmTask extends AbstractWasmTask {
     @Internal
@@ -30,10 +29,7 @@ public abstract class AbstractSimpleWasmTask extends AbstractWasmTask {
     }
 
     protected Object[] apply(Instance instance, Object... args) {
-        return findFunction(instance).apply(args);
+        return findFunction(instance, getFunctionName().get()).apply(args);
     }
 
-    private Function findFunction(Instance instance) {
-        return instance.exports.getFunction(getFunctionName().get());
-    }
 }

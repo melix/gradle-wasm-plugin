@@ -7,3 +7,6 @@ edition = "2018"
 
 [lib]
 crate-type = ["cdylib"]
+
+[dependencies]
+md-5 = "0.9.1"
