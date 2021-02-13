@@ -16,6 +16,9 @@
 package me.champeau.gradle.wasm;
 
 import me.champeau.gradle.wasm.tasks.AbstractWasmTask;
+import me.champeau.gradle.wasm.util.Invoker;
+import me.champeau.gradle.wasm.util.MemoryAccess;
+import me.champeau.gradle.wasm.util.MemoryAmount;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.InputFile;
@@ -23,18 +26,17 @@ import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.PathSensitive;
 import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.TaskAction;
-import org.wasmer.Memory;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.ByteBuffer;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 @CacheableTask
 public abstract class HasherTask extends AbstractWasmTask {
-    private final static int PAGE_SIZE = 64 * 1024;
 
     @InputFile
     @PathSensitive(PathSensitivity.NAME_ONLY)
@@ -67,32 +69,27 @@ public abstract class HasherTask extends AbstractWasmTask {
             if (input == null) {
                 return null;
             }
-            Memory memory = instance.exports.getMemory("memory");
+            Invoker invoker = Invoker.forInstance(instance);
             int len = input.length;
-            System.out.println("Input file len = " + len);
-            memory.grow(1 + (len / PAGE_SIZE));
-
-            // Allocate memory for the subject, and get a pointer to it.
-            Integer input_pointer = apply(instance, "allocate", len);
-
-            ByteBuffer buffer = memory.buffer();
-            buffer.mark();
-            buffer.position(input_pointer);
-            buffer.put(input);
-
-            input_pointer = apply(instance, "process", input_pointer, len);
-            byte[] hash = new byte[16];
-            buffer.reset();
-            buffer.position(input_pointer);
-            buffer.get(hash);
-
-            System.out.println("hash from Rust is " + toHexString(hash));
-            try {
-                hash = MessageDigest.getInstance("MD5").digest(input);
-            } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
+            try (MemoryAccess fileContents = invoker.allocateGrowing(MemoryAmount.ofBytes(len))) {
+                fileContents.write(input);
+                MemoryAccess result = invoker.invokeToMemory("process", 16, fileContents.getPointer(), len);
+                byte[] hash = new byte[16];
+                result.read(hash);
+                String hexHash = toHexString(hash);
+                try (PrintWriter wrt = new PrintWriter(new FileWriter(outputFile))) {
+                    wrt.println(hexHash);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("hash from Rust is " + hexHash);
+                try {
+                    hash = MessageDigest.getInstance("MD5").digest(input);
+                } catch (NoSuchAlgorithmException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("hash from Java is " + toHexString(hash));
             }
-            System.out.println("hash from Java is " + toHexString(hash));
             return null;
         });
     }

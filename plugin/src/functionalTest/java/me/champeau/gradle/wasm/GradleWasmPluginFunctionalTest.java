@@ -71,7 +71,6 @@ public class GradleWasmPluginFunctionalTest {
         BuildResult result = runner.build();
 
         // Verify the result
-        assertTrue(result.getOutput().contains("Input file len = 50"));
         assertTrue(result.getOutput().contains("hash from Rust is 61D7452CCFEA4047C5B4333FC40939B8"));
         assertTrue(result.getOutput().contains("hash from Java is 61D7452CCFEA4047C5B4333FC40939B8"));
     }

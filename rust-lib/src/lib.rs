@@ -22,6 +22,13 @@ pub extern fn allocate(size: usize) -> *const c_void {
 }
 
 #[no_mangle]
+pub extern fn deallocate(pointer: *mut c_void, capacity: usize) {
+    unsafe {
+        let _ = Vec::from_raw_parts(pointer, 0, capacity);
+    }
+}
+
+#[no_mangle]
 pub extern fn process(bytes: *const u8, len: usize) -> *const c_void {
     let data: &[u8] = unsafe { std::slice::from_raw_parts(bytes, len) };
     let mut hasher = Md5::new();
