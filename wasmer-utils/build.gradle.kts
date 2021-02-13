@@ -9,7 +9,7 @@ java {
 }
 
 dependencies {
-    compileOnly(gradleApi())
-    api(project(":wasmer-utils"))
-    testImplementation("junit:junit:4.13.1")
+    listOf("linux", "windows", "darwin").forEach { arch ->
+        api("org.wasmer:wasmer-jni-amd64-${arch}:0.3.0")
+    }
 }

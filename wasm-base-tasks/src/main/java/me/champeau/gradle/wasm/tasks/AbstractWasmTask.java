@@ -18,14 +18,14 @@ package me.champeau.gradle.wasm.tasks;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.InvalidUserCodeException;
 import org.gradle.api.provider.Property;
-import org.gradle.api.tasks.Internal;
+import org.gradle.api.tasks.Input;
 import org.wasmer.Instance;
 
 import java.io.InputStream;
 import java.util.function.Function;
 
 public abstract class AbstractWasmTask extends DefaultTask {
-    @Internal
+    @Input
     protected abstract Property<byte[]> getWasmBinary();
 
     protected void fromClasspathLib(String name) {

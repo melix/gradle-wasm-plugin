@@ -16,9 +16,9 @@
 package me.champeau.gradle.wasm;
 
 import me.champeau.gradle.wasm.tasks.AbstractWasmTask;
-import me.champeau.gradle.wasm.util.Invoker;
-import me.champeau.gradle.wasm.util.MemoryAccess;
-import me.champeau.gradle.wasm.util.MemoryAmount;
+import me.champeau.wasmer.util.Invoker;
+import me.champeau.wasmer.util.MemoryAccess;
+import me.champeau.wasmer.util.MemoryAmount;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.InputFile;

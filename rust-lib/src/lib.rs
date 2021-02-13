@@ -3,7 +3,6 @@ use std::hash::Hash;
 use std::mem;
 use md5::{Md5, Digest};
 use md5::digest::{FixedOutput};
-use std::ops::Deref;
 use std::os::raw::c_void;
 
 #[no_mangle]
@@ -13,12 +12,12 @@ pub extern fn fibo(n: i64) -> i64 {
 }
 
 #[no_mangle]
-pub extern fn allocate(size: usize) -> *const c_void {
+pub extern fn allocate(size: usize) -> *mut c_void {
     let mut buffer = Vec::with_capacity(size);
-    let pointer = buffer.as_ptr();
+    let pointer = buffer.as_mut_ptr();
     mem::forget(buffer);
 
-    pointer as *const c_void
+    pointer as *mut c_void
 }
 
 #[no_mangle]
