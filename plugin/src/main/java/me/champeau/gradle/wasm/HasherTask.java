@@ -19,12 +19,7 @@ import me.champeau.gradle.wasm.tasks.AbstractWasmTask;
 import me.champeau.wasmer.util.Invoker;
 import me.champeau.wasmer.util.MemoryAccess;
 import me.champeau.wasmer.util.MemoryAmount;
-import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.tasks.CacheableTask;
-import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.OutputFile;
-import org.gradle.api.tasks.PathSensitive;
-import org.gradle.api.tasks.PathSensitivity;
 import org.gradle.api.tasks.TaskAction;
 
 import java.io.File;
@@ -36,14 +31,7 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 @CacheableTask
-public abstract class HasherTask extends AbstractWasmTask {
-
-    @InputFile
-    @PathSensitive(PathSensitivity.NAME_ONLY)
-    abstract RegularFileProperty getInputFile();
-
-    @OutputFile
-    abstract RegularFileProperty getOutputFile();
+public abstract class HasherTask extends AbstractWasmTask implements HasherIO {
 
     public HasherTask() {
         fromClasspathLib("demo_lib");

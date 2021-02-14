@@ -46,7 +46,7 @@ public abstract class AbstractWasmTask extends DefaultTask {
         try {
             return fun.apply(instance);
         } finally {
-            instance.close();
+            // instance.close();
         }
     }
 

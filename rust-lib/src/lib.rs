@@ -6,6 +6,11 @@ use md5::digest::{FixedOutput};
 use std::os::raw::c_void;
 
 #[no_mangle]
+pub extern fn sum(x: i32, y: i32) -> i32 {
+    x + y
+}
+
+#[no_mangle]
 pub extern fn fibo(n: i64) -> i64 {
     let cache = &mut HashMap::new();
     fib(cache, n)

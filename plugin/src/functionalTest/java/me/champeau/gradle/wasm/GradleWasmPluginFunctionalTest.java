@@ -75,6 +75,42 @@ public class GradleWasmPluginFunctionalTest {
         assertTrue(result.getOutput().contains("hash from Java is 61D7452CCFEA4047C5B4333FC40939B8"));
     }
 
+    @Test
+    public void canGenerateTaskFromProtocol() throws IOException {
+        // Setup the test build
+        File projectDir = tmpDir.newFolder("functionalTest");
+        Files.createDirectories(projectDir.toPath());
+        writeString(new File(projectDir, "settings.gradle"), "");
+        writeString(new File(projectDir, "build.gradle"),
+                "plugins {" +
+                        "  id('me.champeau.gradle.wasm.greeting')" +
+                        "}\n" +
+                "import me.champeau.gradle.wasm.auto.Sum\n" +
+                "import me.champeau.gradle.wasm.auto.Fibo\n" +
+                        "\n" +
+                        "tasks.register(\"sum\", Sum) {\n" +
+                        "    x = 10\n" +
+                        "    y = 20\n" +
+                        "}" +
+                        "\n" +
+                        "tasks.register(\"fibo\", Fibo) {\n" +
+                        "    number = 90L\n" +
+                        "}");
+
+        // Run the build
+        GradleRunner runner = GradleRunner.create()
+                .forwardOutput()
+                .withPluginClasspath()
+                .withArguments("sum", "fibo")
+                .withProjectDir(projectDir)
+                .withDebug(true);
+        BuildResult result = runner.build();
+
+        // Verify the result
+        assertTrue(result.getOutput().contains("Invocation result = 30"));
+        assertTrue(result.getOutput().contains("Invocation result = 2880067194370816120"));
+    }
+
     private void writeString(File file, String string) throws IOException {
         try (Writer writer = new FileWriter(file)) {
             writer.write(string);

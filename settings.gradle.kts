@@ -14,6 +14,8 @@ includeBuild("build-logic")
 
 // subprojects
 include("wasmer-utils")
+include("wasm-gradle-annotations")
+include("wasm-gradle-processor")
 include("wasm-base-tasks")
 include("rust-lib")
 include("plugin")

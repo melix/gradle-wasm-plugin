@@ -25,6 +25,9 @@ val wasmLibraries by configurations.creating {
 }
 
 dependencies {
+    annotationProcessor(project(":wasm-gradle-processor"))
+    compileOnly(project(":wasm-gradle-annotations"))
+
     wasmLibraries(project(":rust-lib")) {
         because("This demo uses a library built with Rust")
     }
