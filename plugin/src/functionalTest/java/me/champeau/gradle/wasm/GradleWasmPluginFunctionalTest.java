@@ -94,7 +94,7 @@ public class GradleWasmPluginFunctionalTest {
                         "}" +
                         "\n" +
                         "tasks.register(\"fibo\", Fibo) {\n" +
-                        "    number = 90L\n" +
+                        "    number = 15L\n" +
                         "}");
 
         // Run the build
@@ -108,7 +108,7 @@ public class GradleWasmPluginFunctionalTest {
 
         // Verify the result
         assertTrue(result.getOutput().contains("Invocation result = 30"));
-        assertTrue(result.getOutput().contains("Invocation result = 2880067194370816120"));
+        assertTrue(result.getOutput().contains("Invocation result = 610"));
     }
 
     private void writeString(File file, String string) throws IOException {

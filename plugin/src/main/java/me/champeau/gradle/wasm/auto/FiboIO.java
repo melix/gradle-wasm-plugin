@@ -21,7 +21,7 @@ import org.gradle.api.tasks.Input;
 
 @WasmProtocol(
         taskName = "Fibo",
-        classpathBinary = "demo_lib",
+        classpathBinary = "demo_ts",
         functionName = "fibo"
 )
 public interface FiboIO {

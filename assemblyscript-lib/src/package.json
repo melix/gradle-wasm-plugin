@@ -1,0 +1,19 @@
+{
+  "name": "demo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "asbuild:untouched": "asc assembly/demo.ts --target debug",
+    "asbuild:optimized": "asc assembly/demo.ts --target release",
+    "asbuild": "npm run asbuild:untouched && npm run asbuild:optimized"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@assemblyscript/loader": "^0.18.8"
+  },
+  "devDependencies": {
+    "assemblyscript": "^0.18.8"
+  }
+}

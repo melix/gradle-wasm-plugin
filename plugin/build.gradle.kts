@@ -31,6 +31,9 @@ dependencies {
     wasmLibraries(project(":rust-lib")) {
         because("This demo uses a library built with Rust")
     }
+    wasmLibraries(project(":assemblyscript-lib")) {
+        because("This demo uses a library built with AssemblyScript")
+    }
 }
 
 tasks.processResources {

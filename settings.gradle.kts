@@ -18,6 +18,7 @@ include("wasm-gradle-annotations")
 include("wasm-gradle-processor")
 include("wasm-base-tasks")
 include("rust-lib")
+include("assemblyscript-lib")
 include("plugin")
 
 dependencyResolutionManagement {
