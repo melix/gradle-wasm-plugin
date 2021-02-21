@@ -13,32 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.champeau.wasmer.util;
+package me.champeau.wasm.invocation;
 
-public class MemoryAmount {
-    private final int bytes;
+import java.io.Closeable;
 
-    public static MemoryAmount ofBytes(int n) {
-        return new MemoryAmount(n);
+public interface MemoryAccess extends Closeable {
+    int getPointer();
+    int getSize();
+    void deallocate();
+
+    MemoryAccess write(byte[] bytes, int offset, int len);
+    MemoryAccess read(byte[] into, int offset, int len);
+
+    default MemoryAccess write(byte[] bytes) {
+        return write(bytes, 0, bytes.length);
     }
 
-    public static MemoryAmount ofKiloBytes(int n) {
-        return ofBytes(1024 * n);
+    default MemoryAccess read(byte[] into) {
+        return read(into, 0, into.length);
     }
 
-    public static MemoryAmount ofMegaBytes(int n) {
-        return ofKiloBytes(1024 * n);
-    }
-
-    public static MemoryAmount ofGigaBytes(int n) {
-        return ofMegaBytes(1024 * n);
-    }
-
-    private MemoryAmount(int bytes) {
-        this.bytes = bytes;
-    }
-
-    public int getBytes() {
-        return bytes;
+    default void close() {
+        deallocate();
     }
 }

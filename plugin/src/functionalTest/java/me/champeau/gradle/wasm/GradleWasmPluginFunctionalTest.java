@@ -12,8 +12,10 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.io.Writer;
 import java.nio.file.Files;
+import java.util.function.Consumer;
 
 import static org.junit.Assert.assertTrue;
 
@@ -23,6 +25,15 @@ import static org.junit.Assert.assertTrue;
 public class GradleWasmPluginFunctionalTest {
     @Rule
     public TemporaryFolder tmpDir = new TemporaryFolder();
+
+    private GradleRunner runnerFor(File projectDir, String... tasks) {
+        return GradleRunner.create()
+                .forwardOutput()
+                .withPluginClasspath()
+                .withArguments(tasks)
+                .withProjectDir(projectDir)
+                .withDebug(true);
+    }
 
     @Test
     public void canRunTask() throws IOException {
@@ -36,12 +47,7 @@ public class GradleWasmPluginFunctionalTest {
             "}");
 
         // Run the build
-        GradleRunner runner = GradleRunner.create()
-                .forwardOutput()
-                .withPluginClasspath()
-                .withArguments("greet")
-                .withProjectDir(projectDir)
-                .withDebug(true);
+        GradleRunner runner = runnerFor(projectDir, "greet", "-S");
         BuildResult result = runner.build();
 
         // Verify the result
@@ -56,23 +62,30 @@ public class GradleWasmPluginFunctionalTest {
         File projectDir = tmpDir.newFolder("functionalTest");
         Files.createDirectories(projectDir.toPath());
         writeString(new File(projectDir, "settings.gradle"), "");
-        writeString(new File(projectDir, "build.gradle"),
-                "plugins {" +
-                        "  id('me.champeau.gradle.wasm.greeting')" +
-                        "}");
+        withFile(new File(projectDir, "build.gradle"), wrt -> {
+            wrt.println("plugins {");
+            wrt.println("  id('me.champeau.gradle.wasm.greeting')");
+            wrt.println("  id 'java'");
+            wrt.println("}");
+            wrt.println();
+            wrt.println("def file = layout.buildDirectory.file('file.bin')");
+            wrt.println("def binFile = file.get().asFile");
+            wrt.println("binFile.parentFile.mkdirs()");
+            wrt.println("def rnd = new Random(12345L)");
+            wrt.println("binFile.withOutputStream { os -> 32_000_000.times { os.write((byte) rnd.nextInt()) } }");
+            wrt.println();
+            wrt.println("tasks.named('md5') {");
+            wrt.println("   inputFile.set(file)");
+            wrt.println("}");
+        });
 
         // Run the build
-        GradleRunner runner = GradleRunner.create()
-                .forwardOutput()
-                .withPluginClasspath()
-                .withArguments("md5")
-                .withProjectDir(projectDir)
-                .withDebug(true);
+        GradleRunner runner = runnerFor(projectDir, "md5", "-S");
         BuildResult result = runner.build();
 
         // Verify the result
-        assertTrue(result.getOutput().contains("hash from Rust is 61D7452CCFEA4047C5B4333FC40939B8"));
-        assertTrue(result.getOutput().contains("hash from Java is 61D7452CCFEA4047C5B4333FC40939B8"));
+        assertTrue(result.getOutput().contains("hash from Rust is 49DFDCEF6751973A236D35401B6CBFC8"));
+        assertTrue(result.getOutput().contains("hash from Java is 49DFDCEF6751973A236D35401B6CBFC8"));
     }
 
     @Test
@@ -114,6 +127,14 @@ public class GradleWasmPluginFunctionalTest {
     private void writeString(File file, String string) throws IOException {
         try (Writer writer = new FileWriter(file)) {
             writer.write(string);
+        }
+    }
+
+    private void withFile(File file, Consumer<? super PrintWriter> consumer) {
+        try (PrintWriter wrt = new PrintWriter(new FileWriter(file))) {
+            consumer.accept(wrt);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 }

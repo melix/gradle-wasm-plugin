@@ -15,11 +15,11 @@
  */
 package me.champeau.gradle.wasm.tasks;
 
+import me.champeau.wasm.invocation.Invoker;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.InvalidUserCodeException;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
-import org.wasmer.Instance;
 
 import java.io.InputStream;
 import java.util.function.Function;
@@ -40,22 +40,10 @@ public abstract class AbstractWasmTask extends DefaultTask {
         }));
     }
 
-    protected final <T> T withWasmRuntime(Function<Instance, T> fun) {
-        byte[] bytecode = getWasmBinary().get();
-        Instance instance = new Instance(bytecode);
-        try {
-            return fun.apply(instance);
-        } finally {
-            // instance.close();
-        }
+    protected final <T> T withWasmRuntime(Function<Invoker, T> fun) {
+        Invoker invoker = Invoker.fromBinary(getWasmBinary().get())
+                .build();
+        return fun.apply(invoker);
     }
 
-    protected final org.wasmer.exports.Function findFunction(Instance instance, String name) {
-        return instance.exports.getFunction(name);
-    }
-
-    @SuppressWarnings("unchecked")
-    protected <T> T apply(Instance instance, String name, Object... args) {
-        return (T) findFunction(instance, name).apply(args)[0];
-    }
 }

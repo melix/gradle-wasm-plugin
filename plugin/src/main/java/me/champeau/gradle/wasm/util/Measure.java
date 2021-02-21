@@ -13,27 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.champeau.wasmer.util;
+package me.champeau.gradle.wasm.util;
 
-import java.io.Closeable;
+import java.util.concurrent.TimeUnit;
 
-public interface MemoryAccess extends Closeable {
-    int getPointer();
-    int getSize();
-    void deallocate();
-
-    MemoryAccess write(byte[] bytes, int offset, int len);
-    MemoryAccess read(byte[] into, int offset, int len);
-
-    default MemoryAccess write(byte[] bytes) {
-        return write(bytes, 0, bytes.length);
-    }
-
-    default MemoryAccess read(byte[] into) {
-        return read(into, 0, into.length);
-    }
-
-    default void close() {
-        deallocate();
+public class Measure {
+    public static void operation(String label, Runnable r) {
+        System.out.println(label);
+        long sd = System.nanoTime();
+        try {
+            r.run();
+        } finally {
+            long dur = System.nanoTime() - sd;
+            if (dur > 1000) {
+                System.out.println("Took " + TimeUnit.NANOSECONDS.toMillis(dur) + "ms");
+            } else {
+                System.out.println("Took " + dur + "ns");
+            }
+        }
     }
 }

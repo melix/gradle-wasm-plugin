@@ -16,24 +16,13 @@
 package me.champeau.gradle.wasm;
 
 import me.champeau.gradle.wasm.tasks.AbstractSimpleWasmTask;
+import me.champeau.gradle.wasm.util.Fibo;
+import me.champeau.gradle.wasm.util.Measure;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.TaskAction;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.function.Function;
-
 public abstract class Greeter extends AbstractSimpleWasmTask {
-    private final Function<Long, Long> memoizedFib = Memoizer.of((Long x) -> {
-        if (x == 0) {
-            return 0L;
-        }
-        if (x == 1) {
-            return 1L;
-        }
-        return this.memoizedFib.apply(x - 1) + this.memoizedFib.apply(x - 2);
-    });
 
     @Input
     abstract Property<Long> getNumber();
@@ -49,59 +38,20 @@ public abstract class Greeter extends AbstractSimpleWasmTask {
     @TaskAction
     void execute() {
         Long n = getNumber().get();
-        measure("Using memoized fib written in Rust and compiled to WASM", () ->{
-            long calc = callFunction(n);
+        Measure.operation("Using memoized fib written in Rust and compiled to WASM", () ->{
+            Long calc = callFunction(n);
             System.out.println("Rust fib(" + n + ") = " + calc);
         });
-        measure("Using memoized fib written in Java", () ->{
-            long calc = fib(n);
+        Measure.operation("Using memoized fib written in Java", () ->{
+            long calc = Fibo.of(n);
             System.out.println("Java fib(" + n + ") = " + calc);
         });
-        withWasmRuntime(instance -> {
-            measure("With external WASM to native compilation", () -> {
-                Object[] result = apply(instance, n);
-                long calc = (Long) result[0];
+        withWasmRuntime(invoker -> {
+            Measure.operation("With external WASM to native compilation", () -> {
+                Long calc = invoker.invokeSimple(getFunctionName().get(), n);
                 System.out.println("Precompiled Rust fib(" + n + ") = " + calc);
             });
             return null;
         });
-    }
-
-    private void measure(String label, Runnable r) {
-        System.out.println(label);
-        long sd = System.nanoTime();
-        try {
-            r.run();
-        } finally {
-            long dur = System.nanoTime() - sd;
-            System.out.println("Took " + dur + "ns");
-        }
-    }
-
-    private long fib(long n) {
-        return memoizedFib.apply(n);
-    }
-
-    private static class Memoizer<T, R> {
-        private final Map<T, R> cache = new HashMap<>();
-
-        private Memoizer() {
-        }
-
-        public static <T, R> Function<T, R> of(Function<T, R> function) {
-            return new Memoizer<T, R>().memoize(function);
-        }
-
-        private Function<T, R> memoize(Function<T, R> function) {
-            return input -> {
-                if (cache.containsKey(input)) {
-                    return cache.get(input);
-                }
-                R res = function.apply(input);
-                cache.put(input, res);
-                return res;
-            };
-        }
-
     }
 }

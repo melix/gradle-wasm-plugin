@@ -13,7 +13,7 @@ rootProject.name = "gradle-wasm-plugin"
 includeBuild("build-logic")
 
 // subprojects
-include("wasmer-utils")
+include("wasm-invoker")
 include("wasm-gradle-annotations")
 include("wasm-gradle-processor")
 include("wasm-base-tasks")

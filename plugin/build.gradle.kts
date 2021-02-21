@@ -2,16 +2,10 @@ plugins {
     `java-gradle-plugin`
 }
 
-dependencies {
-    implementation(project(":wasm-base-tasks")) {
-        because("Task implementation is a WASM library")
-    }
-    testImplementation("junit:junit:4.13.1")
-}
-
 java {
     toolchain {
         languageVersion.set(JavaLanguageVersion.of(11))
+        vendor.set(JvmVendorSpec.ADOPTOPENJDK)
     }
 }
 
@@ -34,6 +28,10 @@ dependencies {
     wasmLibraries(project(":assemblyscript-lib")) {
         because("This demo uses a library built with AssemblyScript")
     }
+    implementation(project(":wasm-base-tasks")) {
+        because("Task implementation is a WASM library")
+    }
+    testImplementation("junit:junit:4.13.1")
 }
 
 tasks.processResources {
@@ -66,10 +64,13 @@ tasks.check {
     dependsOn(functionalTest)
 }
 
-tasks.register("dump") {
-    doLast {
-        configurations["functionalTestRuntimeClasspath"].files.forEach {
-            println(it)
-        }
-    }
+tasks.register<Test>("graalFunctionalTest") {
+    val functionalTest = tasks.getByName<Test>("functionalTest")
+    classpath = functionalTest.classpath
+    testClassesDirs = functionalTest.testClassesDirs
+    javaLauncher.set(javaToolchains.launcherFor {
+        languageVersion.set(JavaLanguageVersion.of(11))
+        vendor.set(JvmVendorSpec.matching("GraalVM"))
+    })
+    jvmArgs(listOf("--add-exports", "org.graalvm.truffle/com.oracle.truffle.api.interop=ALL-UNNAMED"))
 }

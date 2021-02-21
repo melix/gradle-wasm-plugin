@@ -13,18 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package me.champeau.gradle.wasm.tasks;
+package me.champeau.wasm.invocation;
 
-import org.gradle.api.provider.Property;
-import org.gradle.api.tasks.Internal;
+public class MemoryAmount {
+    private final int bytes;
 
-public abstract class AbstractSimpleWasmTask extends AbstractWasmTask {
-    @Internal
-    protected abstract Property<String> getFunctionName();
-
-    @SuppressWarnings("unchecked")
-    protected final <T> T callFunction(Object... args) {
-        return withWasmRuntime(invoker -> invoker.invokeSimple(getFunctionName().get(), args));
+    public static MemoryAmount ofBytes(int n) {
+        return new MemoryAmount(n);
     }
 
+    public static MemoryAmount ofKiloBytes(int n) {
+        return ofBytes(1024 * n);
+    }
+
+    public static MemoryAmount ofMegaBytes(int n) {
+        return ofKiloBytes(1024 * n);
+    }
+
+    public static MemoryAmount ofGigaBytes(int n) {
+        return ofMegaBytes(1024 * n);
+    }
+
+    private MemoryAmount(int bytes) {
+        this.bytes = bytes;
+    }
+
+    public int getBytes() {
+        return bytes;
+    }
 }

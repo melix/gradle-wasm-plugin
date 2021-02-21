@@ -10,6 +10,6 @@ java {
 
 dependencies {
     compileOnly(gradleApi())
-    api(project(":wasmer-utils"))
+    api(project(":wasm-invoker"))
     testImplementation("junit:junit:4.13.1")
 }

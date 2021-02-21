@@ -16,9 +16,9 @@
 package me.champeau.gradle.wasm;
 
 import me.champeau.gradle.wasm.tasks.AbstractWasmTask;
-import me.champeau.wasmer.util.Invoker;
-import me.champeau.wasmer.util.MemoryAccess;
-import me.champeau.wasmer.util.MemoryAmount;
+import me.champeau.gradle.wasm.util.Measure;
+import me.champeau.wasm.invocation.MemoryAccess;
+import me.champeau.wasm.invocation.MemoryAmount;
 import org.gradle.api.tasks.CacheableTask;
 import org.gradle.api.tasks.TaskAction;
 
@@ -49,7 +49,7 @@ public abstract class HasherTask extends AbstractWasmTask implements HasherIO {
 
     @TaskAction
     void execute() {
-        withWasmRuntime(instance -> {
+        withWasmRuntime(invoker -> {
             File inputFile = getInputFile().getAsFile().get();
             File outputFile = getOutputFile().getAsFile().get();
             outputFile.getParentFile().mkdirs();
@@ -57,26 +57,30 @@ public abstract class HasherTask extends AbstractWasmTask implements HasherIO {
             if (input == null) {
                 return null;
             }
-            Invoker invoker = Invoker.forInstance(instance);
             int len = input.length;
             try (MemoryAccess fileContents = invoker.allocateGrowing(MemoryAmount.ofBytes(len))) {
                 fileContents.write(input);
-                MemoryAccess result = invoker.invokeToMemory("process", 16, fileContents.getPointer(), len);
-                byte[] hash = new byte[16];
-                result.read(hash);
-                String hexHash = toHexString(hash);
-                try (PrintWriter wrt = new PrintWriter(new FileWriter(outputFile))) {
-                    wrt.println(hexHash);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                System.out.println("hash from Rust is " + hexHash);
-                try {
-                    hash = MessageDigest.getInstance("MD5").digest(input);
-                } catch (NoSuchAlgorithmException e) {
-                    e.printStackTrace();
-                }
-                System.out.println("hash from Java is " + toHexString(hash));
+                Measure.operation("Calling WASM runtime", () -> {
+                    MemoryAccess result = invoker.invokeToMemory("process", 16, fileContents.getPointer(), len);
+                    byte[] hash = new byte[16];
+                    result.read(hash);
+                    String hexHash = toHexString(hash);
+                    try (PrintWriter wrt = new PrintWriter(new FileWriter(outputFile))) {
+                        wrt.println(hexHash);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    System.out.println("hash from Rust is " + hexHash);
+                });
+                Measure.operation("Calling Java", () -> {
+                    byte[] hash = new byte[0];
+                    try {
+                        hash = MessageDigest.getInstance("MD5").digest(input);
+                    } catch (NoSuchAlgorithmException e) {
+                        e.printStackTrace();
+                    }
+                    System.out.println("hash from Java is " + toHexString(hash));
+                });
             }
             return null;
         });

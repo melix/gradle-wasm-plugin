@@ -43,7 +43,7 @@ import java.util.stream.Collectors;
 public class WasmGradleProcessor extends AbstractProcessor {
     private final static List<String> TASK_IMPORTS = Collections.unmodifiableList(Arrays.asList(
             "org.gradle.api.tasks.TaskAction",
-            "me.champeau.wasmer.util.Invoker",
+            "me.champeau.wasm.invocation.Invoker",
             "me.champeau.gradle.wasm.tasks.AbstractSimpleWasmTask"
     ));
 
@@ -111,18 +111,14 @@ public class WasmGradleProcessor extends AbstractProcessor {
                         .map(Property::getValueCode)
                         .map(code -> "        " + code)
                         .forEachOrdered(classWriter::println);
-                classWriter.println("        withWasmRuntime(instance -> {");
-                classWriter.println("            Invoker invoker = Invoker.forInstance(instance);");
-                classWriter.println("            Object result = invoker.invokeSimple(\"" + functionName + "\", " + properties.stream().map(Property::getVarName).collect(Collectors.joining(", ")) + ");");
-                classWriter.println("            System.out.println(\"Invocation result = \" + result);");
-                classWriter.println("            return result;");
-                classWriter.println("        });");
+                classWriter.println("        Invoker invoker = Invoker.fromBinary(getWasmBinary().get()).build();");
+                classWriter.println("        Object result = invoker.invokeSimple(\"" + functionName + "\", " + properties.stream().map(Property::getVarName).collect(Collectors.joining(", ")) + ");");
+                classWriter.println("        System.out.println(\"Invocation result = \" + result);");
                 classWriter.println("    }");
                 classWriter.println("}");
             } catch (IOException ex) {
                 throw new RuntimeException(ex);
             }
-            System.err.println(simpleTaskName);
         }
 
         private String libraryNameFrom(WasmProtocol protocolSpec) {
