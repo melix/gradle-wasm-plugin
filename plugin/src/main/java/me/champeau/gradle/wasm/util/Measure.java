@@ -15,8 +15,6 @@
  */
 package me.champeau.gradle.wasm.util;
 
-import java.util.concurrent.TimeUnit;
-
 public class Measure {
     public static void operation(String label, Runnable r) {
         System.out.println(label);
@@ -25,11 +23,16 @@ public class Measure {
             r.run();
         } finally {
             long dur = System.nanoTime() - sd;
+            String unit = "ns";
             if (dur > 1000) {
-                System.out.println("Took " + TimeUnit.NANOSECONDS.toMillis(dur) + "ms");
-            } else {
-                System.out.println("Took " + dur + "ns");
+                unit = "μs";
+                dur /= 1000;
+                if (dur > 1000) {
+                    unit = "ms";
+                    dur /= 1000;
+                }
             }
+            System.out.println("Took " + dur + unit);
         }
     }
 }
