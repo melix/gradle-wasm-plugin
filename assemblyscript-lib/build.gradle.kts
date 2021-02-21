@@ -6,41 +6,66 @@ plugins {
     id("com.bmuschko.docker-remote-api") version "6.7.0"
 }
 
+val imageIdOut = layout.buildDirectory.file("imageid.txt")
+val imageIdText = providers.fileContents(imageIdOut).asText.forUseAtConfigurationTime()
+val containerIdOut = layout.buildDirectory.file("containerid.txt")
+val containerIdText = providers.fileContents(containerIdOut).asText.forUseAtConfigurationTime()
+
 val compilerImage by tasks.registering(DockerBuildImage::class) {
     inputs.files(files("src"))
-    inputDir.set(file("."))
-    dockerFile.set(file("docker/Dockerfile"))
+    inputDir.set(file("image"))
+    dockerFile.set(file("image/docker/Dockerfile"))
+    outputs.file(imageIdOut)
+
+    doLast {
+        imageIdOut.get().asFile.writeText(imageId.get())
+    }
 }
 
 val createContainer by tasks.registering(DockerCreateContainer::class) {
-    targetImageId(compilerImage.map { it.imageId.get() })
+    dependsOn(compilerImage)
+    outputs.file(containerIdOut)
+    targetImageId(imageIdText)
     user.set("gradle")
     workingDir.set("/data")
     cmd.set(listOf("sh", "./build.sh"))
-}
-
-val logs by tasks.registering(DockerLogsContainer::class) {
-    targetContainerId(createContainer.map { it.containerId.get() })
-    since.set(java.util.Date(0))
+    outputs.upToDateWhen {
+        compilerImage.get().state.upToDate
+    }
+    doLast {
+        containerIdOut.get().asFile.writeText(containerId.get())
+    }
 }
 
 val compileTypeScript by tasks.registering(DockerStartContainer::class) {
-    targetContainerId(createContainer.map { it.containerId.get() })
+    inputs.file(containerIdOut)
+    dependsOn(createContainer)
+    targetContainerId(containerIdText)
+    outputs.upToDateWhen {
+        createContainer.get().state.upToDate
+    }
 }
 
 val wasmOutputDir = objects.directoryProperty().convention(layout.buildDirectory.dir("wasm"))
 
 val waitForBinaries by tasks.registering(DockerWaitContainer::class) {
+    inputs.file(containerIdOut)
     dependsOn(compileTypeScript)
-    targetContainerId(createContainer.map { it.containerId.get() })
-    finalizedBy(logs)
+    targetContainerId(containerIdText)
+    outputs.upToDateWhen {
+        compileTypeScript.get().state.upToDate
+    }
 }
 
 val copyWasmBinaries by tasks.registering(DockerCopyFileFromContainer::class) {
+    inputs.file(containerIdOut)
     dependsOn(waitForBinaries)
-    targetContainerId(createContainer.map { it.containerId.get() })
+    targetContainerId(containerIdText)
     remotePath.set("/data/build")
     hostPath.set(wasmOutputDir.map { it.asFile.absolutePath })
+    outputs.upToDateWhen {
+        compilerImage.get().state.upToDate
+    }
 }
 
 val wasmElements by configurations.creating {
